@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:blackcoffer/utilities/buttons.dart';
 
@@ -10,6 +11,7 @@ class UserPhoneNo extends StatefulWidget {
 
 class _UserPhoneNoState extends State<UserPhoneNo> {
   TextEditingController countrycode = TextEditingController();
+  var phonenums = "";
 
   @override
   void initState() {
@@ -59,8 +61,12 @@ class _UserPhoneNoState extends State<UserPhoneNo> {
                         style: TextStyle(
                             color: Colors.blueGrey.shade800, fontSize: 32)),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                         child: TextField(
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              phonenums = value;
+                            },
                             decoration: InputDecoration(
                                 hintText: 'Enter your phone number'))),
                   ],
@@ -69,7 +75,15 @@ class _UserPhoneNoState extends State<UserPhoneNo> {
               const SizedBox(height: 20),
               RoundButtons(
                   title: "Send the OTP",
-                  onTap: () {
+                  onTap: () async {
+                    await FirebaseAuth.instance.verifyPhoneNumber(
+                      phoneNumber: countrycode.text + phonenums,
+                      verificationCompleted:
+                          (PhoneAuthCredential credential) {},
+                      verificationFailed: (FirebaseAuthException e) {},
+                      codeSent: (String verificationId, int? resendToken) {},
+                      codeAutoRetrievalTimeout: (String verificationId) {},
+                    );
                     Navigator.pushNamed(context, 'otp');
                   }),
             ],

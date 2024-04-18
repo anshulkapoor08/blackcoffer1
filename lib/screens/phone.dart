@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:blackcoffer/utilities/buttons.dart';
+import 'package:flutter/services.dart';
 
 class UserPhoneNo extends StatefulWidget {
   const UserPhoneNo({super.key});
+  static String verify = "";
+
 
   @override
   State<UserPhoneNo> createState() => _UserPhoneNoState();
@@ -12,7 +15,9 @@ class UserPhoneNo extends StatefulWidget {
 class _UserPhoneNoState extends State<UserPhoneNo> {
   TextEditingController countrycode = TextEditingController();
   var phonenums = "";
-
+  final TextEditingController _phoneNumberController = TextEditingController();
+  String? _phoneNumberError;
+  
   @override
   void initState() {
     countrycode.text = "+91";
@@ -64,10 +69,13 @@ class _UserPhoneNoState extends State<UserPhoneNo> {
                     Expanded(
                         child: TextField(
                             keyboardType: TextInputType.number,
+                            controller: _phoneNumberController,
+                            inputFormatters: [LengthLimitingTextInputFormatter(10)],
                             onChanged: (value) {
                               phonenums = value;
                             },
                             decoration: InputDecoration(
+                               errorText: _phoneNumberError,
                                 hintText: 'Enter your phone number'))),
                   ],
                 ),
@@ -76,15 +84,28 @@ class _UserPhoneNoState extends State<UserPhoneNo> {
               RoundButtons(
                   title: "Send the OTP",
                   onTap: () async {
+                     if (_isValidPhoneNumber(_phoneNumberController.text)) {
+                  setState(() {
+                    _phoneNumberError = null;
+                  });
+                  // Handle valid phone number
+                  print('Valid phone number: ${_phoneNumberController.text}');
+                } else {
+                  setState(() {
+                    _phoneNumberError = 'Invalid phone number';
+                  });
+                }
                     await FirebaseAuth.instance.verifyPhoneNumber(
                       phoneNumber: countrycode.text + phonenums,
                       verificationCompleted:
                           (PhoneAuthCredential credential) {},
                       verificationFailed: (FirebaseAuthException e) {},
-                      codeSent: (String verificationId, int? resendToken) {},
+                      codeSent: (String verificationId, int? resendToken) {
+                        UserPhoneNo.verify = verificationId;
+                        Navigator.pushNamed(context, 'otp');
+                      },
                       codeAutoRetrievalTimeout: (String verificationId) {},
                     );
-                    Navigator.pushNamed(context, 'otp');
                   }),
             ],
           ),
@@ -93,3 +114,11 @@ class _UserPhoneNoState extends State<UserPhoneNo> {
     );
   }
 }
+
+bool _isValidPhoneNumber(String phoneNumber) {
+    // Simple validation for 10-digit phone number
+     final RegExp regex = RegExp(r'^[0-9]{10}$');
+     return regex.hasMatch(phoneNumber);
+   // return phoneNumber.length == 10 && int.tryParse(phoneNumber) != null;
+  }
+

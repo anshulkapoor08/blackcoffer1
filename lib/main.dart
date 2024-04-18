@@ -1,3 +1,4 @@
+import 'package:blackcoffer/screens/home.dart';
 import 'package:blackcoffer/screens/otp.dart';
 import 'package:blackcoffer/screens/phone.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ void main() async {
     routes: {
       'phone': (context) => UserPhoneNo(),
       'otp': (context) => UserOtp(),
+      'home':(context) => MyHomePage(),
     },
     theme: ThemeData(brightness: Brightness.light),
   ));

@@ -1,18 +1,26 @@
+import 'package:blackcoffer/screens/phone.dart';
 import 'package:blackcoffer/utilities/buttons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 
 class UserOtp extends StatefulWidget {
-  const UserOtp({super.key});
+   UserOtp({super.key});
+  
+  
 
   @override
   State<UserOtp> createState() => _UserOtpState();
 }
 
 class _UserOtpState extends State<UserOtp> {
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  bool _showOtpError = false;
+  String _otpErrorMessage = '';
+  
   @override
   Widget build(BuildContext context) {
-    final defaultPinTheme = PinTheme(
+    /*  final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
       textStyle: TextStyle(
@@ -34,7 +42,8 @@ class _UserOtpState extends State<UserOtp> {
       decoration: defaultPinTheme.decoration?.copyWith(
         color: Color.fromRGBO(234, 239, 243, 1),
       ),
-    );
+    );*/
+    var code = "";
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -66,13 +75,45 @@ class _UserOtpState extends State<UserOtp> {
                     fontSize: 16,
                   )),
               const SizedBox(height: 20),
-              const Pinput(
+              Pinput(
+                onChanged: (value) {
+                  code = value;
+                },
                 length: 6,
                 pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
                 showCursor: true,
+                errorText: _showOtpError ? _otpErrorMessage : null,
               ),
               const SizedBox(height: 20),
-              RoundButtons(title: "Verify the OTP", onTap: () {}),
+              RoundButtons(
+                  title: "Verify the OTP",
+                  onTap: () async {
+                    try {
+                      PhoneAuthCredential credential =
+                          PhoneAuthProvider.credential(
+                              verificationId: UserPhoneNo.verify,
+                              smsCode: code);
+
+                      await auth.signInWithCredential(credential);
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, 'home', (route) => false);
+                    } catch (e) {
+                      if (e is FirebaseAuthException &&
+                          e.code == 'invalid-verification-code') {
+                        setState(() {
+                          _showOtpError = true;
+                          _otpErrorMessage =
+                              'Invalid OTP. Please enter the correct code.';
+                        });
+                        // Optional: Reset error state after a short delay
+                        Future.delayed(const Duration(seconds: 2), () {
+                          setState(() {
+                            _showOtpError = false;
+                          });
+                        });
+                      }
+                    }
+                  }),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
